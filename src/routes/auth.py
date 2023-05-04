@@ -1,7 +1,8 @@
 from functools import wraps
 from flask import Blueprint, request, session, make_response, jsonify
+from src.models.users import User
+from src.types.user_type import userInput
 from ..error import errors
-from werkzeug.security import check_password_hash, generate_password_hash
 from ast import literal_eval
 
 userAuthRoutes = Blueprint("userAuth", __name__)
@@ -9,17 +10,18 @@ userAuthRoutes = Blueprint("userAuth", __name__)
 
 @userAuthRoutes.route("/user/login", methods=["Post"])
 def login():
-    data = request.form
-    session["user_id"] = data["user_id"]
-    return make_response(jsonify({"user_id": data["user_id"]}), 200)
+    data = literal_eval(request.data.decode("utf-8"))
+    user: User = User.login(userLoginInput=data)
+    session["user_id"] = user["id"]
+    return make_response(jsonify(user.as_dict()), 200)
 
 
 @userAuthRoutes.route("/user/new", methods=["POST"])
 def newUser():
     data = literal_eval(request.data.decode("utf-8"))
-    print(data)
-    session["user_id"] = data["user_id"]
-    return make_response(jsonify(data), 200)
+    user = User.newUser(data)
+    session["user_id"] = user["id"]
+    return make_response(jsonify(dict(user)), 200)
 
 
 def login_required(f):
