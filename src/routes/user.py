@@ -1,5 +1,4 @@
 from flask import Blueprint, request, make_response, jsonify, session
-from json import JSONDecoder
 from src.models.todo import Todo
 from src.models.users import User
 from src.types.types import Pagination
@@ -7,12 +6,6 @@ from .auth import login_required
 
 
 userRoutes = Blueprint("user", __name__)
-
-
-# @userRoutes.route("/<user_id>", methods=["GET"])
-# def getUser(user_id: str):
-#     response = make_response(jsonify({"user_id": user_id}), 200)
-#     return response
 
 
 @userRoutes.route("/me", methods=["GET"])

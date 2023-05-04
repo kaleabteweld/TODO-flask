@@ -8,10 +8,6 @@ def addRoutesErrorsHandled(app: Flask):
     def resoure_not_found(error):
         return jsonify(error), 404
 
-    # @app.errorhandler(Exception)
-    # def special_exception_handler(error):
-    #     return 'Database connection failed', 500
-
     @app.errorhandler(HTTPError)
     def http_error(error: HTTPError):
         return jsonify({"error": error.message}), error.code
@@ -19,3 +15,7 @@ def addRoutesErrorsHandled(app: Flask):
     @app.errorhandler(ValidationError)
     def validation_error(error: ValidationError):
         return jsonify({"error": error.message, "path": "".join(error.path)}), 400
+
+    @app.errorhandler(Exception)
+    def exception_handler(error):
+        return str(error), 500

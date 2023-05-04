@@ -4,11 +4,12 @@ from nbformat import ValidationError
 from pyparsing import Any
 from src.types.user_type import userInput
 from .validation import user_validation
-
+from sqlalchemy import func, Column, String, DateTime, Enum, ForeignKey
 from src.utilities.fun import query
 from ..utilities.consts import db
-from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash, generate_password_hash
+from src.utilities import fun
+
 
 from voluptuous import MultipleInvalid
 
@@ -16,11 +17,11 @@ from voluptuous import MultipleInvalid
 class User(db.Model):
     __tablename__ = "users"
 
-    id = db.Column(db.String(80), primary_key=True, default=uuid.uuid4().hex)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    id = Column(String(80), primary_key=True, default=lambda: uuid.uuid4().hex)
+    username = Column(String(80), unique=True, nullable=False)
+    email = Column(String(120), unique=True, nullable=False)
+    password_hash = Column(String(128), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -34,15 +35,11 @@ class User(db.Model):
     @staticmethod
     @query
     def login(userLoginInput: dict[Any, Any]):
-        try:
-            user_validation.user_login_validation_schema(userLoginInput)
-        except MultipleInvalid as e:
-            e = str(e)
-            validation_error = e.split(" @ ")[0]
-            key_name = e.split(" @ ")[1].split("['")[1].split("']")[0]
-            raise ValidationError(message=validation_error, path=key_name)
+        fun.validation(
+            schema=user_validation.user_login_validation_schema, input=userLoginInput
+        )
 
-        user = db.session.query(User).filter_by(email=userLoginInput["email"]).first()
+        user = User.query.filter_by(email=userLoginInput["email"]).first()
 
         if user is None:
             raise ValidationError("Incorrect password or email")
@@ -51,38 +48,25 @@ class User(db.Model):
 
         return user
 
+    @staticmethod
     @query
     def getUserByUsername(self, username):
-        return self.query.filter_by(username=username).first()
+        return User.query.filter_by(username=username).first()
 
     @staticmethod
     @query
     def getUserById(id):
-        user = db.session.query(User).filter_by(id=id).first()
+        user = User.query.filter_by(id=id).first()
         return user
 
     @staticmethod
     @query
     def newUser(userInput: dict[Any, Any]):
-        try:
-            user_validation.user_validation_schema(userInput)
-        except MultipleInvalid as e:
-            e = str(e)
-            validation_error = e.split(" @ ")[0]
-            key_name = e.split(" @ ")[1].split("['")[1].split("']")[0]
-            raise ValidationError(message=validation_error, path=key_name)
+        fun.validation(schema=user_validation.user_validation_schema, input=userInput)
 
-        print("userInput ", userInput)
         user: User = User(username=userInput["username"], email=userInput["email"])
         user.set_password(userInput["password"])
 
         db.session.add(user)
         db.session.commit()
-        print("User created", user)
         return user
-
-    @staticmethod
-    @query
-    def getTodosByUserId(id: str):
-        print("todos", db.session.query(User).filter_by(id=id).first().todos)
-        return db.session.query(User).filter_by(id=id).first().todos

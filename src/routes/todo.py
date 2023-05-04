@@ -1,6 +1,5 @@
 from ast import literal_eval
 from flask import Blueprint, request, jsonify, session
-
 from src.models.todo import Todo
 from .auth import login_required
 

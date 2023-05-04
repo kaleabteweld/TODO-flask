@@ -1,4 +1,5 @@
 import uuid
+from nbformat import ValidationError
 from pyparsing import Any
 from sqlalchemy import func, Column, String, DateTime, Enum, ForeignKey
 from src.types.types import Pagination, StatusEnum
@@ -11,7 +12,7 @@ from .validation import todo_validation
 class Todo(db.Model):
     __tablename__ = "todos"
 
-    id = Column(String(80), primary_key=True, default=uuid.uuid4().hex)
+    id = Column(String(80), primary_key=True, default=lambda: uuid.uuid4().hex)
     title = Column(String(80), nullable=False)
     description = Column(String(120), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -46,12 +47,15 @@ class Todo(db.Model):
     @staticmethod
     @query
     def getTodoById(id: str):
-        return Todo.query.filter_by(id=id).first()
+        todo = Todo.query.filter_by(id=id).first()
+        if todo is None:
+            raise ValidationError("Todo not found", path="id")
+        return todo
 
     @staticmethod
     @query
     def deleteTodoById(id: str):
-        todo = Todo.query.filter_by(id=id).first()
+        todo = Todo.getTodoById(id=id)
         db.session.delete(todo)
         db.session.commit()
         return todo
@@ -62,8 +66,6 @@ class Todo(db.Model):
         fun.validation(schema=todo_validation.update_todo_schema, input=todoInput)
 
         todo = Todo.getTodoById(id=id)
-        print(todo.as_dict())
-        print(todoInput)
         todo = Todo.compareAndUpdate(todo=todo, todoInput=todoInput)
 
         db.session.commit()
@@ -74,11 +76,4 @@ class Todo(db.Model):
         for key, value in todoInput.items():
             if value is not None and value != getattr(todo, key):
                 setattr(todo, key, value)
-
-        # if todoInput["title"] != self.title:
-        #     self.title = todoInput["title"]
-        # if todoInput["description"] != self.description:
-        #     self.description = todoInput["description"]
-        # if todoInput["status"] != self.status:
-        #     self.status = todoInput["status"]
         return todo
