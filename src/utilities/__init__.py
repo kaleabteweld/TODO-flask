@@ -8,7 +8,7 @@ from ..error._init__ import addRoutesErrorsHandled
 
 def makeApp():
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/project.db"
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
     app.config["SECRET_KEY"] = "secret"
 
     registerRoutes(app)
@@ -17,7 +17,15 @@ def makeApp():
 
     db.init_app(app)
 
+    initDb(app)
     return app
+
+
+def initDb(app: Flask):
+    from src.models.users import User
+
+    with app.app_context():
+        db.create_all()
 
 
 # def create_app(test_config=None):
