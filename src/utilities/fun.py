@@ -1,6 +1,7 @@
 from functools import wraps
 import sqlite3
-
+from typing import TypeVar
+from voluptuous import Schema, MultipleInvalid
 from nbformat import ValidationError
 import sqlalchemy
 from src.error.errors import SqlAlchemyError
@@ -25,3 +26,17 @@ def query(f):
             raise SqlAlchemyError(e)
 
     return wrap
+
+
+T = TypeVar("T")
+
+
+def validation(schema: Schema, input: any) -> T:
+    try:
+        schema(input)
+        return input
+    except MultipleInvalid as e:
+        e = str(e)
+        validation_error = e.split(" @ ")[0]
+        key_name = e.split(" @ ")[1].split("['")[1].split("']")[0]
+        raise ValidationError(message=validation_error, path=key_name)

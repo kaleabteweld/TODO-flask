@@ -12,7 +12,7 @@ userAuthRoutes = Blueprint("userAuth", __name__)
 def login():
     data = literal_eval(request.data.decode("utf-8"))
     user: User = User.login(userLoginInput=data)
-    session["user_id"] = user["id"]
+    session["user_id"] = user.id
     return make_response(jsonify(user.as_dict()), 200)
 
 
@@ -20,8 +20,8 @@ def login():
 def newUser():
     data = literal_eval(request.data.decode("utf-8"))
     user = User.newUser(data)
-    session["user_id"] = user["id"]
-    return make_response(jsonify(dict(user)), 200)
+    session["user_id"] = user.id
+    return make_response(jsonify(user.as_dict()), 200)
 
 
 def login_required(f):

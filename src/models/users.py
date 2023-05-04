@@ -7,7 +7,7 @@ from .validation import user_validation
 
 from src.utilities.fun import query
 from ..utilities.consts import db
-from sqlalchemy.sql import func, select, and_
+from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from voluptuous import MultipleInvalid
@@ -55,9 +55,11 @@ class User(db.Model):
     def getUserByUsername(self, username):
         return self.query.filter_by(username=username).first()
 
+    @staticmethod
     @query
-    def getUserById(self, id):
-        return self.query.filter_by(id=id).first()
+    def getUserById(id):
+        user = db.session.query(User).filter_by(id=id).first()
+        return user
 
     @staticmethod
     @query
@@ -78,3 +80,9 @@ class User(db.Model):
         db.session.commit()
         print("User created", user)
         return user
+
+    @staticmethod
+    @query
+    def getTodosByUserId(id: str):
+        print("todos", db.session.query(User).filter_by(id=id).first().todos)
+        return db.session.query(User).filter_by(id=id).first().todos
