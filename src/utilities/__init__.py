@@ -1,25 +1,19 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 
-from ..error import _init__ as error
-
-
-DB_Name = "project.db"
-db = SQLAlchemy()
-
-
-def registerRoutes(app: Flask):
-    from ..routes import user, auth
-    app.register_blueprint(user.userRoutes, url_prefix="/user")
-    app.register_blueprint(auth.userAuthRoutes, url_prefix="/")
+from src.routes import registerRoutes
+from src.utilities.session import initSession
+from src.utilities.consts import db
+from ..error._init__ import addRoutesErrorsHandled
 
 
 def makeApp():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/project.db"
+    app.config["SECRET_KEY"] = "secret"
 
     registerRoutes(app)
-    error.addRoutesErrorsHandled(app)
+    addRoutesErrorsHandled(app)
+    initSession(app)
 
     db.init_app(app)
 
